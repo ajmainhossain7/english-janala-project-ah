@@ -1,27 +1,40 @@
-const loadLessons = () => {
-    fetch("https://openapi.programming-hero.com/api/levels/all")
-        .then((res) => res.json()) // promiss of json data
-        .then((json) => displayLessons(json.data))
+
+// daynamic synonyms maker
+const createElement = (arr) => {
+    const htmlElements = arr.map((el) => `<span class = "btn">${el}</span>`);
+    return(htmlElements.join(" "));
 };
 
+// Voice function
+function pronounceWord(word) {
+  const utterance = new SpeechSynthesisUtterance(word);
+  utterance.lang = "en-EN"; // English
+  window.speechSynthesis.speak(utterance);
+}
+
+
+// active button controler
 const removeActiveBtn = () => {
     const lessonBtn = document.querySelectorAll(".lesson-btn")
     lessonBtn.forEach((btn) => btn.classList.remove("active-btn"))
 }
 
-const loadLevelWord = (id) => {
-    const url = `https://openapi.programming-hero.com/api/level/${id}`
-    fetch(url)
-        .then((res) => res.json())
-        .then((json) => {
-            removeActiveBtn(); //remove all active class
-            const clickBtn = document.getElementById(`lesson-btn-${id}`)
-            clickBtn.classList.add("active-btn") // add active class
-            displayLevelWord(json.data)
-        })
+
+
+// spinner make
+const manageSpinner = (status) =>{
+    if(status == true){
+        document.getElementById("spinner").classList.remove("hidden")
+        document.getElementById("word-container").classList.add("hidden")
+    }
+    else{
+        document.getElementById("spinner").classList.add("hidden")
+        document.getElementById("word-container").classList.remove("hidden")
+    }
 }
 
 
+// word details implement or modal
 const loadWordDetail = async (id) => {
     const url = `https://openapi.programming-hero.com/api/word/${id}`
     const res = await fetch(url);
@@ -33,29 +46,41 @@ const displayWordDetails = (word) => {
     const detailsBox = document.getElementById("details-container");
     detailsBox.innerHTML = `
     <div class = "text-2xl font-semibold">
-                    <h2>${word.word} (<i class="fa-solid fa-microphone-lines"></i>: ${word.pronunciation})
+                    <h2>${word.word ? word.word : "শব্দ পাওয়া যায়নি"} (<i class="fa-solid fa-microphone-lines"></i>: ${word.pronunciation})
                     </h2>
                 </div>
 
                 <div class="">
                     <h2 class="font-semibold">Meaning</h2>
-                    <p>${word.meaning}</p>
+                    <p>${word.meaning ? word.meaning : "অর্থ পাওয়া যায়নি"}</p>
                 </div>
 
                 <div class="">
                     <h2 class="font-semibold">Example</h2>
-                    <p>${word.sentence}</p>
+                    <p>${word.pronunciation ? word.pronunciation : "Pronounciation পাওয়া যায়নি"}</p>
                 </div>
 
                 <div class="">
-                    <h2 class="font-bold">Synonym</h2>
-                    <span class="btn bg-cyan-50">Syn1</span>
-                    <span class="btn bg-cyan-50">Syn1</span>
-                    <span class="btn bg-cyan-50">Syn1</span>
+                    ${createElement(word.synonyms)}
                 </div>`;
     document.getElementById("word_modal").showModal()
 }
 
+
+
+// word implement
+const loadLevelWord = (id) => {
+    manageSpinner(true)
+    const url = `https://openapi.programming-hero.com/api/level/${id}`
+    fetch(url)
+        .then((res) => res.json())
+        .then((json) => {
+            removeActiveBtn(); //remove all active class
+            const clickBtn = document.getElementById(`lesson-btn-${id}`)
+            clickBtn.classList.add("active-btn") // add active class
+            displayLevelWord(json.data)
+        })
+}
 
 const displayLevelWord = (words) => {
     const wordContainer = document.getElementById("word-container");
@@ -68,6 +93,7 @@ const displayLevelWord = (words) => {
             <p class="text-xs text-gray-700 font-bangla">এই Lesson এ এখনো কোন Vocabulary যুক্ত করা হয়নি।</p>
             <h1 class="text-3xl font-bangla">নেক্সট Lesson এ যান</h1>
         </div>`;
+        manageSpinner(false)
         return;
     }
     words.forEach((word) => {
@@ -88,7 +114,7 @@ const displayLevelWord = (words) => {
       <i class="fa-solid fa-circle-info"></i>
     </button>
 
-    <button class="btn bg-[#1A91FF10] hover:bg-[#1A91FF80]">
+    <button onclick = "pronounceWord('${word.word}')" class="btn bg-[#1A91FF10] hover:bg-[#1A91FF80]">
       <i class="fa-solid fa-volume-high"></i>
     </button>
   </div>
@@ -97,9 +123,18 @@ const displayLevelWord = (words) => {
 
         wordContainer.append(card);
     });
+    manageSpinner(false)
 
 }
 
+
+
+// lesson button implement
+const loadLessons = () => {
+    fetch("https://openapi.programming-hero.com/api/levels/all")
+        .then((res) => res.json()) // promiss of json data
+        .then((json) => displayLessons(json.data))
+};
 const displayLessons = (lessons) => {
     // 1 get the container & emty
     const levelContainer = document.getElementById("level-container");
@@ -114,4 +149,25 @@ const displayLessons = (lessons) => {
         levelContainer.append(btnDiv)
     }
 }
+
+
+function toggleCard(element){
+
+const answer =
+element.parentElement.querySelector(".answer")
+
+const icon =
+element.querySelector(".icon")
+
+answer.classList.toggle("hidden")
+
+if(answer.classList.contains("hidden")){
+icon.innerText = "+"
+}
+else{
+icon.innerText = "-"
+}
+
+}
+
 loadLessons();
